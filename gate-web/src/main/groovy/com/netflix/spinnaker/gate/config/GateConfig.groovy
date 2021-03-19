@@ -31,6 +31,7 @@ import com.netflix.spinnaker.fiat.shared.FiatService
 import com.netflix.spinnaker.fiat.shared.FiatStatus
 import com.netflix.spinnaker.filters.AuthenticatedRequestFilter
 import com.netflix.spinnaker.gate.config.PostConnectionConfiguringJedisConnectionFactory.ConnectionPostProcessor
+import com.netflix.spinnaker.gate.config.controllers.PipelineControllerConfigProperties
 import com.netflix.spinnaker.gate.converters.JsonHttpMessageConverter
 import com.netflix.spinnaker.gate.converters.YamlHttpMessageConverter
 import com.netflix.spinnaker.gate.filters.RequestLoggingFilter
@@ -81,7 +82,9 @@ import static retrofit.Endpoints.newFixedEndpoint
 @CompileStatic
 @Configuration
 @Slf4j
-@EnableConfigurationProperties([FiatClientConfigurationProperties, DynamicRoutingConfigProperties])
+@EnableConfigurationProperties([FiatClientConfigurationProperties,
+  DynamicRoutingConfigProperties,
+  PipelineControllerConfigProperties])
 @Import([PluginsAutoConfiguration, DeckPluginConfiguration, PluginWebConfiguration])
 class GateConfig extends RedisHttpSessionConfiguration {
 
