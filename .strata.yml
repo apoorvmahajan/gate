@@ -1,0 +1,15 @@
+---
+# From https://confluence.internal.salesforce.com/display/public/ZEN/Pipeline+Stages+In+Depth#PipelineStagesInDepth-Global.strata.ymlKeys
+pipeline_template: utest-only/Jenkinsfile-1
+email_reply_to: sfcdupstream@salesforce.com
+docker_test_images:
+  - dva/sfcd/spinnaker-build:latest
+
+# proxy information comes from
+# https://git.soma.salesforce.com/sfcd/docker-spinnaker-build/blob/bd9266225fa66dc7d1838a5a8bcfc494ab969705/Dockerfile
+# and
+# https://git.soma.salesforce.com/sfcd/builds-shared/blob/0b2919641456edb62150aecace366ed05e6bf6bb/make/include/spinnaker.mk#L3
+#
+# other gradle options match the upstream PR builds here:
+# https://git.soma.salesforce.com/spinnaker/gate/blob/456acdadf26ebd84c0ca0e4d0d9808103a39d28c/.github/workflows/pr.yml#L6
+unit_tests_command: GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx6g -Xms6g -Dhttps.proxyHost=${HTTP_PROXY_HOST} -Dhttps.proxyPort=${HTTP_PROXY_PORT} -Dhttp.nonProxyHosts=\"${HTTP_PROXY_BYPASS}\"" ./gradlew build
