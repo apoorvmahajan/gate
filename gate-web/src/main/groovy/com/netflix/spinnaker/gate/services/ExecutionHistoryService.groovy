@@ -39,6 +39,8 @@ class ExecutionHistoryService {
 
   List getPipelines(String app, Integer limit, String statuses, Boolean expand) {
     Preconditions.checkNotNull(app)
-    orcaServiceSelector.select().getPipelines(app, limit, statuses, expand)
+    def pipelines = orcaServiceSelector.select().getPipelines(app, limit, statuses, expand)
+    log.info("received {} executions for application: {}", pipelines.size(),app)
+    return pipelines
   }
 }
