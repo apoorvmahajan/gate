@@ -13,3 +13,7 @@ docker_test_images:
 # other gradle options match the upstream PR builds here:
 # https://git.soma.salesforce.com/spinnaker/gate/blob/456acdadf26ebd84c0ca0e4d0d9808103a39d28c/.github/workflows/pr.yml#L6
 unit_tests_command: GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx6g -Xms6g -Dhttps.proxyHost=${HTTP_PROXY_HOST} -Dhttps.proxyPort=${HTTP_PROXY_PORT} -Dhttp.nonProxyHosts=\"${HTTP_PROXY_BYPASS}\"" ./gradlew build
+
+production_branch:
+  - release-1.21.x-sfcd
+  - release-1.23.x-sfcd
