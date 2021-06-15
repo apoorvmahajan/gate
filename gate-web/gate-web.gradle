@@ -63,14 +63,17 @@ dependencies {
 
   // To fix https://nvd.nist.gov/vuln/detail/CVE-2021-21350
   // Introduced by com.netflix.eureka:eureka-client via kork-eureka
-  //
   // TODO: Move to kork
   // when we build kork ourselves, update in spinnaker-dependencies/spinnaker-dependencies.gradle. And remove completely when
   // https://github.com/Netflix/eureka releases a version that contains
   // https://github.com/Netflix/eureka/commit/50db5d24a7c45375c0b32fffa238256276e6432e, and kork uses it.
 
+  // To fix https://nvd.nist.gov/vuln/detail/CVE-2020-7692
+  // Introduced by com.google.apis:google-api-services-storage via kork-secrets-gcp
+  // TODO: Move to kork
   constraints {
      runtimeOnly("com.thoughtworks.xstream:xstream:1.4.16")
+     runtimeOnly("com.google.oauth-client:google-oauth-client:1.31.0")
   } // code-fix end
 
   testImplementation "com.graphql-java-kickstart:graphql-spring-boot-starter-test:7.0.1"
