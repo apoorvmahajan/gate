@@ -75,10 +75,15 @@ dependencies {
   // To fix https://nvd.nist.gov/vuln/detail/CVE-2019-17495
   // Introduced by io.springfox:springfox-swagger-ui via kork-bom and kork-swagger
   // TODO: Move to kork, update version
+
+  // To fix https://github.com/cbeust/testng/issues/2150 (sonatype-2019-0115)
+  // Introduced by org.testng used by org.codehaus.groovy:groovy-testng via kork-web
+  // TODO: Move to kork by upgrading the version of groovy and spockframework, along with springboot version
   constraints {
      runtimeOnly("com.thoughtworks.xstream:xstream:1.4.16")
      runtimeOnly("com.google.oauth-client:google-oauth-client:1.31.0")
      runtimeOnly("io.springfox:springfox-swagger-ui:2.10.0")
+     implementation("org.testng:testng:7.4.0")
   } // code-fix end
 
   testImplementation "com.graphql-java-kickstart:graphql-spring-boot-starter-test:7.0.1"
