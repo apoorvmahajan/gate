@@ -38,8 +38,8 @@ dependencies {
   implementation "com.netflix.spinnaker.fiat:fiat-core:$fiatVersion"
   implementation "com.netflix.spinnaker.fiat:fiat-api:$fiatVersion"
 
-  implementation "com.netflix.spinnaker.kork:kork-plugins"
-  implementation "com.netflix.spinnaker.kork:kork-web"
+  implementation "com.salesforce.spinnaker.kork:kork-plugins"
+  implementation "com.salesforce.spinnaker.kork:kork-web"
   implementation "com.netflix.frigga:frigga"
   implementation "redis.clients:jedis"
 
@@ -63,7 +63,7 @@ dependencies {
 
   implementation "io.springfox:springfox-swagger2"
 
-  runtimeOnly "com.netflix.spinnaker.kork:kork-runtime"
+  runtimeOnly "com.salesforce.spinnaker.kork:kork-runtime"
   runtimeOnly "org.springframework.boot:spring-boot-properties-migrator"
 
   // To fix https://nvd.nist.gov/vuln/detail/CVE-2021-21350
@@ -102,8 +102,8 @@ dependencies {
   testImplementation "org.springframework.security:spring-security-ldap"
   testImplementation "org.springframework.security:spring-security-oauth2-jose"
   testImplementation "com.unboundid:unboundid-ldapsdk"
-  testImplementation "com.netflix.spinnaker.kork:kork-jedis-test"
-  testRuntimeOnly "com.netflix.spinnaker.kork:kork-retrofit"
+  testImplementation "com.salesforce.spinnaker.kork:kork-jedis-test"
+  testRuntimeOnly "com.salesforce.spinnaker.kork:kork-retrofit"
 
   // Add each included authz provider as a runtime dependency
   gradle.includedProviderProjects.each {
