@@ -4,6 +4,8 @@ pipeline_template: utest-only/Jenkinsfile-1
 email_reply_to: sfcdupstream@salesforce.com
 docker_test_images:
   - dva/sfcd/spinnaker-build:latest
+# Convince strata to stop using snyk's default (and specific to maven) args
+snyk_build_args: "''"
 
 # proxy information comes from
 # https://git.soma.salesforce.com/sfcd/docker-spinnaker-build/blob/bd9266225fa66dc7d1838a5a8bcfc494ab969705/Dockerfile
