@@ -6,7 +6,10 @@ docker_test_images:
   - dva/sfcd/spinnaker-build:latest
 # Convince strata to stop using snyk's default (and specific to maven) args
 snyk_build_args: "''"
-
+# Prune the dependency tree since clouddriver is a large project
+# https://support.snyk.io/hc/en-us/articles/360002061438-CLI-returns-the-error-Failed-to-get-Vulns-
+# Without pruning synk does not successfully run
+snyk_cmd_args: "--all-projects --prune-repeated-subdependencies"
 # proxy information comes from
 # https://git.soma.salesforce.com/sfcd/docker-spinnaker-build/blob/bd9266225fa66dc7d1838a5a8bcfc494ab969705/Dockerfile
 # and
