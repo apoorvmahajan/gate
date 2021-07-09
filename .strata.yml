@@ -6,16 +6,11 @@ docker_test_images:
   - dva/sfcd/spinnaker-build:latest
 # Convince strata to stop using snyk's default (and specific to maven) args
 snyk_build_args: "''"
-# Prune the dependency tree since clouddriver is a large project
+# Prune the dependency tree since gate is a large project
 # https://support.snyk.io/hc/en-us/articles/360002061438-CLI-returns-the-error-Failed-to-get-Vulns-
 # Without pruning synk does not successfully run
 snyk_cmd_args: "--all-projects --prune-repeated-subdependencies"
-# proxy information comes from
-# https://git.soma.salesforce.com/sfcd/docker-spinnaker-build/blob/bd9266225fa66dc7d1838a5a8bcfc494ab969705/Dockerfile
-# and
-# https://git.soma.salesforce.com/sfcd/builds-shared/blob/0b2919641456edb62150aecace366ed05e6bf6bb/make/include/spinnaker.mk#L3
-#
-# other gradle options match the upstream PR builds here:
+# gradle options match the upstream PR builds here:
 # https://git.soma.salesforce.com/spinnaker/gate/blob/456acdadf26ebd84c0ca0e4d0d9808103a39d28c/.github/workflows/pr.yml#L6
 unit_tests_command: gradleenv auto && GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx6g -Xms6g" ./gradlew build
 
