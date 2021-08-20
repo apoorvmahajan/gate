@@ -43,11 +43,7 @@ dependencies {
   implementation "com.netflix.frigga:frigga"
   implementation "redis.clients:jedis"
 
-  // To fix https://git.soma.salesforce.com/pages/Infrastructure-Security/ast.github.io/sonatype-2018-0705.html (sonatype-2018-0705)
-  // Introduced by commons-io:commons-io via kork-bom
-  // TODO: Move to kork by upgrading the version
-  implementation 'commons-io:commons-io:2.7'
-  // code-fix end
+  implementation 'commons-io:commons-io'
 
   implementation 'org.springframework.session:spring-session-data-redis'
   implementation "de.huxhorn.sulky:de.huxhorn.sulky.ulid"
