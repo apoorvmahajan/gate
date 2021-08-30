@@ -1,9 +1,9 @@
 ---
 # From https://confluence.internal.salesforce.com/display/public/ZEN/Pipeline+Stages+In+Depth#PipelineStagesInDepth-Global.strata.ymlKeys
-pipeline_template: utest-only/Jenkinsfile-1
+pipeline_template: docker/Jenkinsfile-1
 email_reply_to: sfcdupstream@salesforce.com
 docker_test_images:
-  - dva/sfcd/spinnaker-build:latest
+  - sfci/sfcd/docker-spinnaker-build/sfcd/spinnaker-build:latest
 # Convince strata to stop using snyk's default (and specific to maven) args
 snyk_build_args: "''"
 # Prune the dependency tree since gate is a large project
@@ -12,8 +12,10 @@ snyk_build_args: "''"
 snyk_cmd_args: "--all-projects --prune-repeated-subdependencies"
 # gradle options match the upstream PR builds here:
 # https://git.soma.salesforce.com/spinnaker/gate/blob/456acdadf26ebd84c0ca0e4d0d9808103a39d28c/.github/workflows/pr.yml#L6
-unit_tests_command: gradleenv auto && GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx6g -Xms6g" ./gradlew build
-
+unit_tests_command: gradleenv auto && GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx6g -Xms6g" ./gradlew build gate-web:distTar && spinnaker_git_tag.sh
+docker_images:
+  gate_release-1.23.x-sfcd: ./Dockerfile.sfcd
 production_branch:
   - release-1.21.x-sfcd
   - release-1.23.x-sfcd
+promote_to_falcon: true
