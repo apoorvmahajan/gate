@@ -16,15 +16,14 @@
 
 package com.netflix.spinnaker.gate
 
+import com.netflix.spinnaker.gate.config.ApplicationConfigurationProperties
 import com.netflix.spinnaker.gate.config.Service
 import com.netflix.spinnaker.gate.config.ServiceConfiguration
 import com.netflix.spinnaker.gate.services.ApplicationService
 import com.netflix.spinnaker.gate.services.internal.ClouddriverServiceSelector
 import com.netflix.spinnaker.gate.services.internal.Front50Service
 import com.netflix.spinnaker.gate.services.internal.ClouddriverService
-import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Subject
 import spock.lang.Unroll
 
 import java.util.concurrent.Executors
@@ -36,27 +35,31 @@ class ApplicationServiceSpec extends Specification {
     select() >> clouddriver
   }
 
-  @Subject
-  def service = applicationService()
-
   private applicationService() {
-    def service = new ApplicationService()
+    applicationService(new ApplicationConfigurationProperties())
+  }
+
+  private applicationService(ApplicationConfigurationProperties applicationConfigurationProperties) {
     def config = new ServiceConfiguration(services: [front50: new Service()])
-
-    service.serviceConfiguration = config
-    service.front50Service = front50
-    service.clouddriverServiceSelector = clouddriverSelector
-    service.executorService = Executors.newFixedThreadPool(1)
-
+    def service = new ApplicationService(
+      config,
+      clouddriverSelector,
+      front50,
+      Executors.newFixedThreadPool(1),
+      applicationConfigurationProperties
+    )
     return service
   }
 
-  void "should properly aggregate application data from Front50 and Clouddriver"() {
+  void "should properly aggregate application data from Front50 and Clouddriver when useFront50AsSourceOfTruth: #useFront50AsSourceOfTruth"() {
     given:
     def clouddriverApp = [name: name, attributes: [clouddriverName: name, name: "bad"], clusters: [(account): [cluster]]]
     def front50App = [name: name, email: email, owner: owner, accounts: account]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(useFront50AsSourceOfTruth)
 
     when:
+    def service = applicationService(applicationConfigurationProperties)
     def app = service.getApplication(name, true)
 
     then:
@@ -66,6 +69,7 @@ class ApplicationServiceSpec extends Specification {
     app == [name: name, attributes: (clouddriverApp.attributes + front50App), clusters: clouddriverApp.clusters]
 
     where:
+    useFront50AsSourceOfTruth << [true, false]
     name = "foo"
     email = "bar@baz.bz"
     owner = "danw"
@@ -74,12 +78,78 @@ class ApplicationServiceSpec extends Specification {
     providerType = "aws"
   }
 
-  void "should ignore accounts from front50 and only include those from clouddriver clusters"() {
+  @Unroll
+  void "when UseFront50AsSourceOfTruth: #checkFront50 and application exists only in clouddriver"() {
+    given:
+    def clouddriverApp = [name: name, attributes: [clouddriverName: name, name: "bad"], clusters: [(account): [cluster]]]
+    def front50App = [:]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    def app = service.getApplication(name, true)
+
+    then:
+    1 * front50.getApplication(name) >> front50App
+
+    numberOfClouddriverInvocations * clouddriver.getApplication(name) >> clouddriverApp
+
+    assert app == result
+
+    where:
+    checkFront50 | numberOfClouddriverInvocations | result
+    true         | 0                              | null
+    false        | 1                              | [name:"foo", attributes:[clouddriverName:"foo", name:"foo", accounts: "test"], clusters:["test":["cluster1"]]]
+
+    name = "foo"
+    email = "bar@baz.bz"
+    owner = "danw"
+    cluster = "cluster1"
+    account = "test"
+    providerType = "aws"
+  }
+
+  @Unroll
+  void "when UseFront50AsSourceOfTruth: #checkFront50 and application exists only in clouddriver, but front50 throws an exception"() {
+    given:
+    def clouddriverApp = [name: name, attributes: [clouddriverName: name, name: "bad"], clusters: [(account): [cluster]]]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    def app = service.getApplication(name, true)
+
+    then:
+    1 * front50.getApplication(name) >> new Exception("fatal exception")
+
+    numberOfClouddriverInvocations * clouddriver.getApplication(name) >> clouddriverApp
+
+    assert app == result
+
+    where:
+    checkFront50 | numberOfClouddriverInvocations | result
+    true         | 0                              | null
+    false        | 1                              | [name:"foo", attributes:[clouddriverName:"foo", name:"foo", accounts: "test"], clusters:["test":["cluster1"]]]
+
+    name = "foo"
+    email = "bar@baz.bz"
+    owner = "danw"
+    cluster = "cluster1"
+    account = "test"
+    providerType = "aws"
+  }
+
+  void "should ignore accounts from front50 and only include those from clouddriver clusters when UseFront50AsSourceOfTruth: #checkFront50"() {
     given:
     def clouddriverApp = [name: name, attributes: [clouddriverName: name, name: "bad"], clusters: [(clouddriverAccount): [cluster]]]
     def front50App = [name: name, email: email, owner: owner, accounts: front50Account]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
 
     when:
+    def service = applicationService()
     def app = service.getApplication(name, true)
 
     then:
@@ -89,6 +159,7 @@ class ApplicationServiceSpec extends Specification {
     app == [name: name, attributes: (clouddriverApp.attributes + front50App + [accounts: [clouddriverAccount].toSet().sort().join(',')]), clusters: clouddriverApp.clusters]
 
     where:
+    checkFront50 << [true, false]
     name = "foo"
     email = "bar@baz.bz"
     owner = "danw"
@@ -101,9 +172,14 @@ class ApplicationServiceSpec extends Specification {
   @Unroll
   void "should return null when application account does not match includedAccounts"() {
     setup:
-    def serviceWithDifferentConfig = applicationService()
     def config = new ServiceConfiguration(services: [front50: new Service(config: [includedAccounts: includedAccount])])
-    serviceWithDifferentConfig.serviceConfiguration = config
+    ApplicationService serviceWithDifferentConfig = new ApplicationService(
+      config,
+      clouddriverSelector,
+      front50,
+      Executors.newFixedThreadPool(1),
+      new ApplicationConfigurationProperties()
+    )
 
     when:
     def app = serviceWithDifferentConfig.getApplication(name, true)
@@ -131,6 +207,7 @@ class ApplicationServiceSpec extends Specification {
 
   void "should return null when no application attributes are available"() {
     when:
+    def service = applicationService()
     def app = service.getApplication(name, true)
 
     then:
@@ -150,6 +227,7 @@ class ApplicationServiceSpec extends Specification {
     def front50App = [name: name.toLowerCase(), email: email]
 
     when:
+    def service = applicationService()
     service.refreshApplicationsCache()
     def apps = service.getAllApplications()
 
@@ -175,6 +253,7 @@ class ApplicationServiceSpec extends Specification {
     def front50App = [name: name.toLowerCase(), email: email, accounts: "test"]
 
     when:
+    def service = applicationService()
     service.refreshApplicationsCache()
     def apps = service.getAllApplications()
 
@@ -194,6 +273,33 @@ class ApplicationServiceSpec extends Specification {
   }
 
   @Unroll
+  def "should properly merge accounts for retrieved apps with clusterNames when useFront50AsSourceOfTruth is #checkFront50"() {
+    given:
+    def clouddriverApp1 = [name: "appname1", attributes: [name: "appname1"], clusterNames: [prod: ["cluster-prod"]]]
+    def clouddriverApp2 = [name: "appname2", attributes: [name: "appname2"], clusterNames: [dev: ["cluster-dev"]]]
+    def front50App = [name: "appname1", email:  "foo@bar.bz", accounts: "test"]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    service.refreshApplicationsCache()
+    def apps = service.getAllApplications()
+
+    then:
+    1 * clouddriver.getAllApplicationsUnrestricted(true) >> [clouddriverApp1, clouddriverApp2]
+    1 * front50.getAllApplicationsUnrestricted() >> [front50App]
+
+    assert apps.size() == resultSize
+    assert apps == result
+
+    where:
+    checkFront50 | resultSize | result
+    true         | 1          | [[name:"appname1", email:"foo@bar.bz", accounts:"prod"]]
+    false        | 2          | [[name:"appname1", email:"foo@bar.bz", accounts:"prod"], [name:"appname2", accounts:"dev"]]
+  }
+
+  @Unroll
   void "should merge accounts"() {
     expect:
     ApplicationService.mergeAccounts(accounts1, accounts2) == mergedAccounts
@@ -210,6 +316,7 @@ class ApplicationServiceSpec extends Specification {
   @Unroll
   void "should return pipeline config based on name or id"() {
     when:
+    def service = applicationService()
     def result = service.getPipelineConfigForApplication(app, nameOrId) != null
 
     then:
@@ -229,7 +336,7 @@ class ApplicationServiceSpec extends Specification {
     given:
     def name = 'myApp'
     def serviceWithApplicationsCache = applicationService()
-    serviceWithApplicationsCache.allApplicationsCache.set([
+    serviceWithApplicationsCache.getAllApplicationsCache().set([
         [name: name, email: "cached@email.com"]
     ])
 
