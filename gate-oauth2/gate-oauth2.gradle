@@ -1,7 +1,7 @@
 dependencies {
   implementation project(":gate-core")
   implementation "com.netflix.spectator:spectator-api"
-  implementation "com.netflix.spinnaker.fiat:fiat-api:$fiatVersion"
+  implementation "com.salesforce.spinnaker.fiat:fiat-api:$fiatVersion"
   implementation "com.salesforce.spinnaker.kork:kork-exceptions"
   implementation "com.salesforce.spinnaker.kork:kork-security"
   implementation "org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure"

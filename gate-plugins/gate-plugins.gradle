@@ -22,8 +22,8 @@ dependencies {
   implementation project(":gate-core")
 
   implementation "com.google.guava:guava"
-  implementation "com.netflix.spinnaker.fiat:fiat-core:$fiatVersion"
-  implementation "com.netflix.spinnaker.fiat:fiat-api:$fiatVersion"
+  implementation "com.salesforce.spinnaker.fiat:fiat-core:$fiatVersion"
+  implementation "com.salesforce.spinnaker.fiat:fiat-api:$fiatVersion"
   implementation "com.salesforce.spinnaker.kork:kork-plugins"
   implementation "com.salesforce.spinnaker.kork:kork-web"
 

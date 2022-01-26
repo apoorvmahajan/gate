@@ -5,6 +5,6 @@ dependencies {
   implementation "com.salesforce.spinnaker.kork:kork-security"
   implementation "com.netflix.spectator:spectator-api"
   implementation "com.github.ben-manes.caffeine:caffeine"
-  implementation "com.netflix.spinnaker.fiat:fiat-api:$fiatVersion"
-  implementation "com.netflix.spinnaker.fiat:fiat-core:$fiatVersion"
+  implementation "com.salesforce.spinnaker.fiat:fiat-api:$fiatVersion"
+  implementation "com.salesforce.spinnaker.fiat:fiat-core:$fiatVersion"
 }

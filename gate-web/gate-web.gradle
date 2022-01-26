@@ -35,8 +35,8 @@ dependencies {
   implementation "com.squareup.okhttp:okhttp-urlconnection"
   implementation "com.squareup.okhttp:okhttp-apache"
 
-  implementation "com.netflix.spinnaker.fiat:fiat-core:$fiatVersion"
-  implementation "com.netflix.spinnaker.fiat:fiat-api:$fiatVersion"
+  implementation "com.salesforce.spinnaker.fiat:fiat-core:$fiatVersion"
+  implementation "com.salesforce.spinnaker.fiat:fiat-api:$fiatVersion"
 
   implementation "com.salesforce.spinnaker.kork:kork-plugins"
   implementation "com.salesforce.spinnaker.kork:kork-web"
