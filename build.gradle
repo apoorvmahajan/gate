@@ -1,6 +1,3 @@
-import org.gradle.api.tasks.Copy
-import org.gradle.jvm.tasks.Jar
-
 plugins {
   id 'io.spinnaker.project' version "$spinnakerGradleVersion" apply false
   id "org.jetbrains.kotlin.jvm" version "$kotlinVersion" apply false
@@ -64,14 +61,6 @@ allprojects {
       exclude group: 'javax.servlet', module: 'servlet-api'
       exclude group: 'javax.servlet', module: 'javax.servlet-api'
     }
-  }
-
-  tasks.withType(Copy).all {
-    duplicatesStrategy 'exclude'
-  }
-
-  tasks.withType(Jar).all {
-    duplicatesStrategy 'exclude'
   }
 
   tasks.withType(JavaExec) {
