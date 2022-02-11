@@ -86,7 +86,7 @@ dependencies {
 
   // Add each included authz provider as a runtime dependency
   gradle.includedProviderProjects.each {
-    runtime project(it)
+    runtimeOnly project(it)
   }
 }
 
