@@ -23,6 +23,9 @@ import com.netflix.spinnaker.gate.services.ApplicationService
 import com.netflix.spinnaker.gate.services.internal.ClouddriverServiceSelector
 import com.netflix.spinnaker.gate.services.internal.Front50Service
 import com.netflix.spinnaker.gate.services.internal.ClouddriverService
+import retrofit.RetrofitError
+import retrofit.client.Response
+import retrofit.mime.TypedByteArray
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -122,16 +125,18 @@ class ApplicationServiceSpec extends Specification {
     def app = service.getApplication(name, true)
 
     then:
-    1 * front50.getApplication(name) >> new Exception("fatal exception")
+    1 * front50.getApplication(name) >> exception
 
     numberOfClouddriverInvocations * clouddriver.getApplication(name) >> clouddriverApp
 
     assert app == result
 
     where:
-    checkFront50 | numberOfClouddriverInvocations | result
-    true         | 0                              | null
-    false        | 1                              | [name:"foo", attributes:[clouddriverName:"foo", name:"foo", accounts: "test"], clusters:["test":["cluster1"]]]
+    checkFront50 | numberOfClouddriverInvocations | result | exception
+    true         | 0                              | null   | new Exception("fatal exception")
+    true         | 0                              | null   | retrofit404()
+    false        | 1                              | [name:"foo", attributes:[clouddriverName:"foo", name:"foo", accounts: "test"], clusters:["test":["cluster1"]]] | new Exception("fatal exception")
+    false        | 1                              | [name:"foo", attributes:[clouddriverName:"foo", name:"foo", accounts: "test"], clusters:["test":["cluster1"]]] | retrofit404()
 
     name = "foo"
     email = "bar@baz.bz"
@@ -139,6 +144,64 @@ class ApplicationServiceSpec extends Specification {
     cluster = "cluster1"
     account = "test"
     providerType = "aws"
+  }
+
+  @Unroll
+  void "when UseFront50AsSourceOfTruth: #checkFront50 and application exists only in front50, but clouddriver throws an exception"() {
+    given:
+    def front50App = [name: name, email: email, owner: owner, accounts: account]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    def app = service.getApplication(name, true)
+
+    then:
+    1 * front50.getApplication(name) >> front50App
+    1 * clouddriver.getApplication(name) >> exception
+
+    assert app == [name: name, attributes:[name: name, email: email, owner: owner, accounts: account], clusters:[:]]
+
+    where:
+    checkFront50 | exception
+    true         | new Exception("fatal exception")
+    true         | retrofit404()
+    false        | new Exception("fatal exception")
+    false        | retrofit404()
+
+    name = "foo"
+    email = "bar@baz.bz"
+    owner = "danw"
+    cluster = "cluster1"
+    account = "test"
+    providerType = "aws"
+  }
+
+  @Unroll
+  void "when UseFront50AsSourceOfTruth: #checkFront50 and both front50 and clouddriver throw an exception"() {
+    given:
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    def app = service.getApplication(name, true)
+
+    then:
+    1 * front50.getApplication(name) >> exception
+    numberOfClouddriverInvocations * clouddriver.getApplication(name) >> exception
+
+    assert app == null
+
+    where:
+    checkFront50 | numberOfClouddriverInvocations | exception
+    true         | 0                              | new Exception("fatal exception")
+    true         | 0                              | retrofit404()
+    false        | 1                              | new Exception("fatal exception")
+    false        | 1                              | retrofit404()
+
+    name = "foo"
   }
 
   void "should ignore accounts from front50 and only include those from clouddriver clusters when UseFront50AsSourceOfTruth: #checkFront50"() {
@@ -300,6 +363,92 @@ class ApplicationServiceSpec extends Specification {
   }
 
   @Unroll
+  def "should handle front50 returning an exception when useFront50AsSourceOfTruth is #checkFront50"() {
+    given:
+    def clouddriverApp1 = [name: "appname1", attributes: [name: "appname1"], clusterNames: [prod: ["cluster-prod"]]]
+    def clouddriverApp2 = [name: "appname2", attributes: [name: "appname2"], clusterNames: [dev: ["cluster-dev"]]]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    service.refreshApplicationsCache()
+    def apps = service.getAllApplications()
+
+    then:
+    1 * front50.getAllApplicationsUnrestricted() >> exception
+    1 * clouddriver.getAllApplicationsUnrestricted(true) >> [clouddriverApp1, clouddriverApp2]
+
+    assert apps.size() == resultSize
+    assert apps == result
+
+    where:
+    checkFront50 | resultSize | result                                                                  | exception
+    true         | 0          | []                                                                      | new Exception("fatal exception")
+    true         | 0          | []                                                                      | retrofit404()
+    false        | 2          | [[name:"appname1", accounts:"prod"], [name:"appname2", accounts:"dev"]] | new Exception("fatal exception")
+    false        | 2          | [[name:"appname1", accounts:"prod"], [name:"appname2", accounts:"dev"]] | retrofit404()
+  }
+
+  @Unroll
+  def "should handle clouddriver returning an exception when useFront50AsSourceOfTruth is #checkFront50"() {
+    given:
+    def front50App = [name: name, email:  email, accounts: account]
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    service.refreshApplicationsCache()
+    def apps = service.getAllApplications()
+
+    then:
+    1 * front50.getAllApplicationsUnrestricted() >> [front50App]
+    1 * clouddriver.getAllApplicationsUnrestricted(true) >> exception
+
+    assert apps.size() == 1
+    assert apps == [[name: name, email: email, accounts: account]]
+
+    where:
+    checkFront50 | exception
+    true         | new Exception("fatal exception")
+    true         | retrofit404()
+    false        | new Exception("fatal exception")
+    false        | retrofit404()
+
+    name = "appname1"
+    email = "foo@bar.bz"
+    account = "test"
+  }
+
+  @Unroll
+  def "should handle both front50 and clouddriver returning an exception when useFront50AsSourceOfTruth is #checkFront50"() {
+    given:
+    ApplicationConfigurationProperties applicationConfigurationProperties = new ApplicationConfigurationProperties()
+    applicationConfigurationProperties.setUseFront50AsSourceOfTruth(checkFront50)
+
+    when:
+    def service = applicationService(applicationConfigurationProperties)
+    service.refreshApplicationsCache()
+    def apps = service.getAllApplications()
+
+    then:
+    1 * front50.getAllApplicationsUnrestricted() >> exception
+    1 * clouddriver.getAllApplicationsUnrestricted(true) >> exception
+
+    assert apps.size() == 0
+
+    where:
+
+    checkFront50 | exception
+    true         | new Exception("fatal exception")
+    true         | retrofit404()
+    false        | new Exception("fatal exception")
+    false        | retrofit404()
+
+  }
+
+  @Unroll
   void "should merge accounts"() {
     expect:
     ApplicationService.mergeAccounts(accounts1, accounts2) == mergedAccounts
@@ -353,5 +502,9 @@ class ApplicationServiceSpec extends Specification {
     }
 
     app.attributes.email == "updated@email.com"
+  }
+
+  def retrofit404(){
+    RetrofitError.httpError("http://localhost", new Response("http://localhost", 404, "Not Found", [], new TypedByteArray("application/json", new byte[0])), null, Map)
   }
 }

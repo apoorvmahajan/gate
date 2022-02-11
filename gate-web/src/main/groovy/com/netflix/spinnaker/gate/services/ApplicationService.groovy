@@ -338,7 +338,7 @@ class ApplicationService {
           // capture the result from clouddriver
           clouddriverApp = clouddriverFuture.get()
           String clouddriverAppName = clouddriverApp.get("name")
-          if (clouddriverAppName.equalsIgnoreCase(front50App.get("name") as String)) {
+          if (clouddriverAppName?.equalsIgnoreCase(front50App.get("name") as String)) {
             result.add(clouddriverApp)
           }
         }
