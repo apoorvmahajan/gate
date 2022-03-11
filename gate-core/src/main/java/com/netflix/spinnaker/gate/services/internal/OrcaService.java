@@ -68,6 +68,13 @@ public interface OrcaService {
       @Query("expand") boolean expand);
 
   @Headers("Accept: application/json")
+  @GET("/pipelines/failedStages")
+  List<Object> getFailedStagesForPipelineExecution(
+      @Query("pipelineExecutionId") String pipelineExecutionId,
+      @Query("deckOrigin") String deckOrigin,
+      @Query("limit") Integer limit);
+
+  @Headers("Accept: application/json")
   @GET("/applications/{application}/pipelines/search")
   List searchForPipelineExecutionsByTrigger(
       @Path("application") String application,

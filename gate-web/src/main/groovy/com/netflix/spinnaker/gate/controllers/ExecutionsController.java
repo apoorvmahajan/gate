@@ -165,4 +165,30 @@ public class ExecutionsController {
             reverse,
             expand);
   }
+
+  @ApiOperation(
+      value =
+          "Retrieves the subset of pipeline stages in a failed state. "
+              + "For stages which are nested pipelines the execution graph is traversed and failed child stages are also returned. "
+              + "An empty list is returned if no failed stages map to the given pipeline execution id.")
+  @RequestMapping(value = "/executions/failedStages", method = RequestMethod.GET)
+  List<Object> getFailedStagesForPipelineExecution(
+      @ApiParam(value = "Pipeline execution id for which to retrieve failed stages.")
+          @RequestParam(value = "pipelineExecutionId")
+          String pipelineExecutionId,
+      @ApiParam(
+              value =
+                  "The Deck UI origin to use for building the pipeline execution URL for failing stages. "
+                      + "If not set then only the path is generated and returned, i.e. the part after scheme://host:port.")
+          @RequestParam(value = "deckOrigin", required = false)
+          String deckOrigin,
+      @ApiParam(
+              value =
+                  "The maximum number of nested pipeline executions to return for failing stages. The default value is 1.")
+          @RequestParam(value = "limit", defaultValue = "1")
+          Integer limit) {
+    return orcaServiceSelector
+        .select()
+        .getFailedStagesForPipelineExecution(pipelineExecutionId, deckOrigin, limit);
+  }
 }
