@@ -174,8 +174,8 @@ public class ExecutionsController {
   @RequestMapping(value = "/executions/failedStages", method = RequestMethod.GET)
   List<Object> getFailedStagesForPipelineExecution(
       @ApiParam(value = "Pipeline execution id for which to retrieve failed stages.")
-          @RequestParam(value = "pipelineExecutionId")
-          String pipelineExecutionId,
+          @RequestParam(value = "executionId")
+          String executionId,
       @ApiParam(
               value =
                   "The Deck UI origin to use for building the pipeline execution URL for failing stages. "
@@ -189,6 +189,6 @@ public class ExecutionsController {
           Integer limit) {
     return orcaServiceSelector
         .select()
-        .getFailedStagesForPipelineExecution(pipelineExecutionId, deckOrigin, limit);
+        .getFailedStagesForPipelineExecution(executionId, deckOrigin, limit);
   }
 }

@@ -70,7 +70,7 @@ public interface OrcaService {
   @Headers("Accept: application/json")
   @GET("/pipelines/failedStages")
   List<Object> getFailedStagesForPipelineExecution(
-      @Query("pipelineExecutionId") String pipelineExecutionId,
+      @Query("executionId") String executionId,
       @Query("deckOrigin") String deckOrigin,
       @Query("limit") Integer limit);
 
