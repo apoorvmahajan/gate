@@ -13,9 +13,8 @@ RUN mv /usr/lib/gate /usr/lib/spinnaker-gate && \
 RUN ln -s /usr/lib/spinnaker-gate/bin/gate /usr/bin/spinnaker-gate
 
 COPY Dockerfile.sfcd /etc/Dockerfile
-COPY entrypoint.sh /sbin/entrypoint
 
 HEALTHCHECK CMD curl http://localhost:${PORT}/health | grep UP || exit 1
 USER ${USER}
 EXPOSE ${PORT}/tcp
-ENTRYPOINT ["/sbin/entrypoint"]
+ENTRYPOINT ["/usr/bin/spinnaker-gate"]
