@@ -191,4 +191,25 @@ public class ExecutionsController {
         .select()
         .getFailedStagesForPipelineExecution(executionId, deckOrigin, limit);
   }
+
+  @ApiOperation(
+      value =
+          "Retrieves the subset of pipeline stages which are of type manual judgment. "
+              + "For stages which are nested pipelines the execution graph is traversed and manual judgment stages of the child pipelines are also returned. "
+              + "An empty list is returned if no manual judgment stages map to the given pipeline execution id.")
+  @RequestMapping(value = "/executions/manualJudgmentStages", method = RequestMethod.GET)
+  List<Object> getManualJudgmentStagesForPipelineExecution(
+      @ApiParam(value = "Pipeline execution id for which to retrieve manual judgment stages.")
+          @RequestParam(value = "executionId")
+          String executionId,
+      @ApiParam(
+              value =
+                  "The Deck UI origin to use for building the pipeline execution URL for manual judgment stages. "
+                      + "If not set then only the path is generated and returned, i.e. the part after scheme://host:port.")
+          @RequestParam(value = "deckOrigin", required = false)
+          String deckOrigin) {
+    return orcaServiceSelector
+        .select()
+        .getManualJudgmentStagesForPipelineExecution(executionId, deckOrigin);
+  }
 }

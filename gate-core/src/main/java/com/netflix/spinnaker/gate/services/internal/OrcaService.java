@@ -75,6 +75,11 @@ public interface OrcaService {
       @Query("limit") Integer limit);
 
   @Headers("Accept: application/json")
+  @GET("/pipelines/manualJudgmentStages")
+  List<Object> getManualJudgmentStagesForPipelineExecution(
+      @Query("executionId") String executionId, @Query("deckOrigin") String deckOrigin);
+
+  @Headers("Accept: application/json")
   @GET("/applications/{application}/pipelines/search")
   List searchForPipelineExecutionsByTrigger(
       @Path("application") String application,
