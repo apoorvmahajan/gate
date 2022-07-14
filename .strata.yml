@@ -12,7 +12,7 @@ snyk_build_args: "''"
 snyk_cmd_args: "--all-projects --prune-repeated-subdependencies"
 # gradle options match the upstream PR builds here:
 # https://git.soma.salesforce.com/spinnaker/gate/blob/456acdadf26ebd84c0ca0e4d0d9808103a39d28c/.github/workflows/pr.yml#L6
-unit_tests_command: gradleenv auto && GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx6g -Xms6g" ./gradlew build gate-web:distTar && spinnaker_git_tag.sh
+unit_tests_command: unset services && gradleenv auto && GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx6g -Xms6g" ./gradlew build gate-web:distTar && spinnaker_git_tag.sh
 docker_images:
   gate_release-1.23.x-sfcd: ./Dockerfile.sfcd
 production_branch:
