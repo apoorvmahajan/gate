@@ -74,8 +74,6 @@ import redis.clients.jedis.JedisPool
 import retrofit.Endpoint
 
 import javax.servlet.*
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 import static retrofit.Endpoints.newFixedEndpoint
 
@@ -138,11 +136,6 @@ class GateConfig extends RedisHttpSessionConfiguration {
   @ConditionalOnProperty("redis.configuration.secure")
   ConfigureRedisAction connectionPostProcessorConfigureRedisAction() {
     return ConfigureRedisAction.NO_OP
-  }
-
-  @Bean
-  ExecutorService executorService() {
-    Executors.newCachedThreadPool()
   }
 
   @Autowired
@@ -388,7 +381,7 @@ class GateConfig extends RedisHttpSessionConfiguration {
   FilterRegistrationBean authenticatedRequestFilter() {
     // no need to force the `AuthenticatedRequestFilter` to create a request id as that is
     // handled by the `RequestTimingFilter`.
-    def frb = new FilterRegistrationBean(new AuthenticatedRequestFilter(false, true, false, false))
+    def frb = new FilterRegistrationBean(new AuthenticatedRequestFilter(true, true, false, false))
     frb.order = Ordered.LOWEST_PRECEDENCE - 1
     return frb
   }
