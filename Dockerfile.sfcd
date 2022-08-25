@@ -1,3 +1,4 @@
+FROM dva-registry.internal.salesforce.com/sfci/spinnaker/armory-observability-plugin:1 as armory-observability-plugin
 FROM dva-registry.internal.salesforce.com/sfci/sfcd/docker-spinnaker-base/sfcd/spinnaker-base:34
 
 LABEL SCM_URL="https://git.soma.salesforce.com/spinnaker/gate"
@@ -11,6 +12,9 @@ RUN mv /usr/lib/gate /usr/lib/spinnaker-gate && \
     chown -R ${USER}:${USER} /usr/lib/spinnaker-gate
 
 RUN ln -s /usr/lib/spinnaker-gate/bin/gate /usr/bin/spinnaker-gate
+
+# armory observability plugin (aop)
+COPY --from=armory-observability-plugin --chown=${USER}:${USER} /*.zip /opt/plugins/
 
 COPY Dockerfile.sfcd /etc/Dockerfile
 
